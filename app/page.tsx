@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Eye,
   Calendar,
+  Clock,
   ShieldCheck,
   Zap,
 } from 'lucide-react';
@@ -76,17 +77,7 @@ export default function Home() {
         api.get('/settings').catch(() => null),
       ]);
       setFeaturedFish(fishRes.data?.items || []);
-      setCategories(catRes.data || [
-        { id: '1', name: 'Cá nước ngọt', slug: 'ca-nuoc-nghot' },
-        { id: '2', name: 'Cá thủy sinh', slug: 'ca-thuy-sinh' },
-        { id: '3', name: 'Cá Betta', slug: 'ca-betta' },
-        { id: '4', name: 'Cá Guppy (Bảy màu)', slug: 'ca-guppy' },
-        { id: '5', name: 'Cá Koi & Cá Vàng', slug: 'ca-koi-ca-vang' },
-        { id: '6', name: 'Cá biển', slug: 'ca-bien' },
-        { id: '7', name: 'Tép cảnh', slug: 'tep-canh' },
-        { id: '8', name: 'Ốc cảnh', slug: 'oc-canh' },
-        { id: '9', name: 'Cây thủy sinh', slug: 'cay-thuy-sinh' },
-      ]);
+      setCategories(Array.isArray(catRes.data) ? catRes.data : (Array.isArray(catRes) ? catRes : []));
       setFeaturedTanks(tankRes.data || []);
       setQuestions(qRes.data?.items || []);
       setArticles(artRes.data?.items || []);
@@ -157,7 +148,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left Content */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left animate-slide-in-left">
               
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 text-white text-xs sm:text-sm font-bold tracking-wide backdrop-blur border border-white/30 shadow-sm animate-pulse-subtle shimmer-badge">
                 <Sparkles className="w-4 h-4 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
@@ -229,13 +220,13 @@ export default function Home() {
             </div>
 
             {/* Right Floating Visual Card with Animated Glow */}
-            <div className="lg:col-span-5 relative hidden lg:block">
+            <div className="lg:col-span-5 relative hidden lg:block animate-slide-in-right delay-200">
               <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-amber-300 rounded-3xl blur-lg opacity-40 animate-pulse-subtle pointer-events-none" />
               <div className="relative mx-auto w-full max-w-md bg-white rounded-3xl p-4 text-slate-800 shadow-2xl border border-blue-100 animate-float space-y-3">
                 
                 <div className="flex items-center justify-between border-b border-blue-50 pb-3">
                   <div className="flex items-center gap-2">
-                    <img src="/logo/aquahub.png" alt="AquaHub Logo" className="w-8 h-8 object-contain shrink-0" />
+                    <img src="/logo/logo.png" alt="AquaHub Logo" className="w-8 h-8 object-contain shrink-0" />
                     <div>
                       <span className="font-bold text-slate-900 text-sm">{settings.heroTankName}</span>
                       <p className="text-[11px] text-slate-400">Owner: {settings.heroOwnerName}</p>
@@ -278,7 +269,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 2: STATS COUNTER BAR */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20 animate-fade-in-up delay-100">
         <AdBanner position="BANNER_TOP" />
         <div className="bg-white border border-blue-100 rounded-3xl p-4 sm:p-6 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           
@@ -306,10 +297,10 @@ export default function Home() {
       </section>
 
       {/* SECTION 3: FEATURE HIGHLIGHTS */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up delay-150">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <div className="bg-white border border-blue-100 rounded-3xl p-4 space-y-3 shadow-sm hover:shadow-md hover:border-blue-300 transition group">
+          <div className="bg-white border border-blue-100 rounded-3xl p-4 space-y-3 shadow-sm hover:shadow-md hover:border-blue-300 transition group hover:-translate-y-1 duration-300">
             <div className="w-12 h-12 rounded-2xl bg-[#E5F2FF] text-[#1A94FF] flex items-center justify-center font-bold group-hover:bg-[#1A94FF] group-hover:text-white transition duration-300">
               <FishIcon className="w-6 h-6" />
             </div>
@@ -319,7 +310,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="bg-white border border-blue-100 rounded-3xl p-4 space-y-3 shadow-sm hover:shadow-md hover:border-teal-300 transition group">
+          <div className="bg-white border border-blue-100 rounded-3xl p-4 space-y-3 shadow-sm hover:shadow-md hover:border-teal-300 transition group hover:-translate-y-1 duration-300">
             <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold group-hover:bg-teal-600 group-hover:text-white transition duration-300">
               <Layers className="w-6 h-6" />
             </div>
@@ -329,7 +320,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="bg-white border border-blue-100 rounded-3xl p-4 space-y-3 shadow-sm hover:shadow-md hover:border-indigo-300 transition group">
+          <div className="bg-white border border-blue-100 rounded-3xl p-4 space-y-3 shadow-sm hover:shadow-md hover:border-indigo-300 transition group hover:-translate-y-1 duration-300">
             <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold group-hover:bg-indigo-600 group-hover:text-white transition duration-300">
               <Wrench className="w-6 h-6" />
             </div>
@@ -343,7 +334,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 4: FEATURED FISH GRID */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in-up delay-200">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-[#1A94FF] uppercase tracking-wider mb-1">Cơ sở dữ liệu cá cảnh</div>
@@ -387,7 +378,7 @@ export default function Home() {
             <Link
               key={fish.id}
               href={`/ca-canh/${fish.slug}`}
-              className="group bg-white border border-blue-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex flex-col"
+              className="group bg-white border border-blue-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
               <div className="h-48 bg-blue-50 overflow-hidden relative">
                 <img
@@ -433,7 +424,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 5: INTERACTIVE QUICK TOOL SANDBOX */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up delay-200">
         <div className="bg-gradient-to-r from-blue-50 via-white to-cyan-50 border border-blue-200 rounded-3xl p-8 sm:p-12 shadow-sm space-y-8">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -503,7 +494,7 @@ export default function Home() {
             </div>
 
             {/* Result Box */}
-            <div className="lg:col-span-5 bg-white border border-blue-200 rounded-2xl p-4 text-center space-y-3 shadow-md">
+            <div className="lg:col-span-5 bg-white border border-blue-200 rounded-2xl p-4 text-center space-y-3 shadow-md hover:scale-[1.02] transition-transform">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kết quả dung tích chứa nước</div>
               <div className="text-5xl font-black text-[#1A94FF]">
                 {calcVolume} <span className="text-2xl font-normal text-slate-600">Lít</span>
@@ -525,7 +516,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 6: HOT COMMUNITY Q&A DISCUSSIONS */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in-up delay-200">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-[#1A94FF] uppercase tracking-wider mb-1">Góc tư vấn</div>
@@ -539,7 +530,7 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {questions.map((q) => (
-            <div key={q.id} className="bg-white border border-blue-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition space-y-3">
+            <div key={q.id} className="bg-white border border-blue-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-300 hover:-translate-y-1 transition duration-300 space-y-3">
               <div className="flex items-center gap-2">
                 {q.isSolved && (
                   <span className="inline-flex items-center gap-1 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">
@@ -573,8 +564,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 7: ARTICLES & GUIDES */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* SECTION 7: ARTICLES & GUIDES (TEXT-FIRST EDITORIAL CARDS) */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in-up delay-200">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-[#1A94FF] uppercase tracking-wider mb-1">Cẩm nang nuôi cá</div>
@@ -587,44 +578,63 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {articles.map((art) => (
-            <Link
-              key={art.id}
-              href={`/cam-nang/${art.slug}`}
-              className="group bg-white border border-blue-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition flex flex-col"
-            >
-              <div className="h-44 bg-blue-50 overflow-hidden relative">
-                <img
-                  src={art.coverImage || 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=800'}
-                  alt={art.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-
-              <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+          {articles.map((art) => {
+            const readingTime = Math.max(1, Math.ceil((art.content?.length || 500) / 500));
+            const dateStr = art.publishedAt ? new Date(art.publishedAt).toLocaleDateString('vi-VN') : null;
+            return (
+              <Link
+                key={art.id}
+                href={`/cam-nang/${art.slug}`}
+                className="group bg-white border border-slate-100 hover:border-blue-200 hover:-translate-y-1 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+              >
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg group-hover:text-[#1A94FF] transition line-clamp-2">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#1A94FF] border border-blue-100">
+                      {art.category || 'Cẩm nang'}
+                    </span>
+                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {readingTime} phút đọc
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#1A94FF] transition-colors line-clamp-2 mb-2 leading-snug">
                     {art.title}
                   </h3>
+
                   {art.excerpt && (
-                    <p className="text-slate-600 text-xs mt-2 line-clamp-2 leading-relaxed">
+                    <p className="text-slate-600 text-xs sm:text-sm line-clamp-3 mb-4 leading-relaxed font-normal">
                       {art.excerpt}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-xs font-semibold text-[#1A94FF] pt-3 border-t border-blue-50">
-                  <span>Đọc bài viết</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 mt-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      {art.viewsCount || 0}
+                    </span>
+                    {dateStr && (
+                      <span className="flex items-center gap-1 text-slate-400">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {dateStr}
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-bold text-[#1A94FF] group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                    <span>Đọc bài</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       {/* SECTION 8: COMMUNITY CALLOUT BANNER (TIKI BLUE GRADIENT) */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 animate-scale-in delay-200">
         <div className="rounded-3xl bg-gradient-to-r from-[#1A94FF] via-[#0B74E5] to-[#0D5CB6] p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl shadow-blue-500/20 text-white relative overflow-hidden">
           <div className="space-y-4 max-w-xl z-10 text-center md:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold backdrop-blur">
@@ -642,13 +652,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 z-10 w-full sm:w-auto">
             <Link
               href="/register"
-              className="px-6 py-3.5 rounded-2xl bg-white text-[#0B74E5] font-bold text-sm text-center shadow-lg hover:bg-blue-50 transition"
+              className="px-6 py-3.5 rounded-2xl bg-white text-[#0B74E5] font-bold text-sm text-center shadow-lg hover:bg-blue-50 hover:scale-105 transition active:scale-95"
             >
               Đăng ký tài khoản
             </Link>
             <Link
               href="/ho-ca"
-              className="px-6 py-3.5 rounded-2xl bg-white/20 border border-white/30 text-white font-bold text-sm text-center hover:bg-white/30 transition backdrop-blur"
+              className="px-6 py-3.5 rounded-2xl bg-white/20 border border-white/30 text-white font-bold text-sm text-center hover:bg-white/30 hover:scale-105 transition backdrop-blur active:scale-95"
             >
               Xem danh sách hồ cá
             </Link>

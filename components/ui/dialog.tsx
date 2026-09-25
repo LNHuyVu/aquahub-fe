@@ -10,6 +10,7 @@ export interface DialogProps {
   subtitle?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  headerActions?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
   showCloseButton?: boolean;
   closeOnBackdropClick?: boolean;
@@ -35,6 +36,7 @@ export const Dialog: React.FC<DialogProps> = ({
   subtitle,
   children,
   footer,
+  headerActions,
   size = '2xl',
   showCloseButton = true,
   closeOnBackdropClick = true,
@@ -60,13 +62,22 @@ export const Dialog: React.FC<DialogProps> = ({
     };
   }, [isOpen, onClose]);
 
+  const mouseDownTargetRef = React.useRef<EventTarget | null>(null);
+
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+      onMouseDown={(e) => {
+        mouseDownTargetRef.current = e.target;
+      }}
       onClick={(e) => {
-        if (closeOnBackdropClick && e.target === e.currentTarget) {
+        if (
+          closeOnBackdropClick &&
+          e.target === e.currentTarget &&
+          mouseDownTargetRef.current === e.currentTarget
+        ) {
           onClose();
         }
       }}
@@ -79,8 +90,8 @@ export const Dialog: React.FC<DialogProps> = ({
         } ${className}`}
       >
         {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-5 py-4 sm:px-6 border-b border-blue-50 bg-gradient-to-r from-blue-50/50 to-white">
+        {(title || showCloseButton || headerActions) && (
+          <div className="flex items-center justify-between px-5 py-4 sm:px-6 border-b border-blue-50 bg-gradient-to-r from-blue-50/50 to-white shrink-0">
             <div className="space-y-0.5 min-w-0 pr-4">
               {typeof title === 'string' ? (
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">
@@ -94,16 +105,19 @@ export const Dialog: React.FC<DialogProps> = ({
               )}
             </div>
 
-            {showCloseButton && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition cursor-pointer shrink-0"
-                aria-label="Đóng"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {headerActions}
+              {showCloseButton && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition cursor-pointer shrink-0"
+                  aria-label="Đóng"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 

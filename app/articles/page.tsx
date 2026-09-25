@@ -1,18 +1,28 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Article } from '@/types';
-import { BookOpen, Calendar, Eye, ChevronRight, Search, ChevronLeft } from 'lucide-react';
+import { BookOpen, Calendar, Eye, ChevronRight, Search } from 'lucide-react';
+import Pagination from '@/components/ui/pagination';
+import DetailPageHeader from '@/components/ui/detail-page-header';
 
-export default function ArticlesPage() {
+function ArticlesPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination & Filter States
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  // Initialize states from URL search params so page state is retained on Back navigation
+  const search = searchParams.get('search') || '';
+  const selectedCategory = searchParams.get('category') || '';
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = parseInt(searchParams.get('pageSize') || '24', 10);
+
+  const [searchInput, setSearchInput] = useState(search);
   const [categories, setCategories] = useState<string[]>([
     'Tất cả cẩm nang',
     'Kỹ thuật nuôi & Làm nước',
@@ -22,10 +32,24 @@ export default function ArticlesPage() {
     'Kinh nghiệm chọn cá',
   ]);
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  const updateUrlParams = (newParams: Record<string, string | number | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([key, val]) => {
+      if (val === null || val === '' || val === undefined) {
+        params.delete(key);
+      } else {
+        params.set(key, String(val));
+      }
+    });
+    router.push(`/cam-nang?${params.toString()}`);
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -65,37 +89,16 @@ export default function ArticlesPage() {
     }
   };
 
-  const renderPaginationButtons = () => {
-    const pages = [];
-    const maxButtons = 5;
-    let startPage = Math.max(1, page - 2);
-    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-
-    if (endPage - startPage < maxButtons - 1) {
-      startPage = Math.max(1, endPage - maxButtons + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => setPage(i)}
-          className={`w-9 h-9 rounded-xl text-xs font-bold transition cursor-pointer ${
-            page === i
-              ? 'bg-[#1A94FF] text-white shadow-md shadow-blue-500/20'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          {i}
-        </button>
-      );
-    }
-    return pages;
-  };
-
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 space-y-4 sm:space-y-6">
-      
+    <div className="container mx-auto px-3 sm:px-4 py-4 space-y-4">
+      {/* Breadcrumb Header */}
+      <DetailPageHeader
+        breadcrumbs={[]}
+        currentTitle="Cẩm Nang Thủy Sinh"
+        showShare={false}
+        showBack={false}
+      />
+
       {/* Synchronized Header Banner */}
       <div className="bg-gradient-to-r from-[#1A94FF] via-[#0B74E5] to-[#0D5CB6] rounded-3xl p-8 sm:p-10 text-white shadow-lg shadow-blue-500/10 space-y-3 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
@@ -120,10 +123,7 @@ export default function ArticlesPage() {
             return (
               <button
                 key={cat}
-                onClick={() => {
-                  setSelectedCategory(cat === 'Tất cả cẩm nang' ? '' : cat);
-                  setPage(1);
-                }}
+                onClick={() => updateUrlParams({ category: cat === 'Tất cả cẩm nang' ? null : cat, page: 1 })}
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition cursor-pointer border ${
                   isSelected
                     ? 'bg-[#1A94FF] text-white border-[#1A94FF] shadow-md shadow-blue-500/20'
@@ -137,132 +137,201 @@ export default function ArticlesPage() {
         </div>
 
         {/* Search Toolbar */}
-        <div className="flex items-center justify-between gap-4 bg-white border border-blue-100 p-4 rounded-2xl shadow-xs">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateUrlParams({ search: searchInput, page: 1 });
+          }}
+          className="flex items-center justify-between gap-4 bg-white border border-blue-100 p-4 rounded-2xl shadow-xs"
+        >
           <div className="relative flex-1 w-full">
             <input
               type="text"
-              placeholder="Tìm cẩm nang (ví dụ: Nấm cá, Betta, Guppy, Cycle bể...)"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Tìm cẩm nang (ví dụ: Nấm cá, Betta, Guppy, Cycle bể... Nhấn Enter)"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#1A94FF] transition"
             />
             <Search className="w-4 h-4 text-[#1A94FF] absolute left-3.5 top-3" />
           </div>
-        </div>
+        </form>
       </div>
 
-      {/* Articles Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {loading ? (
-          [1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-72 bg-white border border-blue-100 rounded-2xl animate-pulse" />
-          ))
-        ) : articles.length === 0 ? (
-          <div className="col-span-3 bg-white border border-blue-100 rounded-2xl p-12 text-center text-slate-400 space-y-2">
-            <BookOpen className="w-10 h-10 text-[#1A94FF] mx-auto" />
-            <p className="font-bold text-slate-700">Không tìm thấy bài viết cẩm nang phù hợp</p>
-            <p className="text-xs text-slate-400">Hãy thử thay đổi từ khóa tìm kiếm.</p>
-          </div>
-        ) : (
-          articles.map((art) => (
-            <Link
-              key={art.id}
-              href={`/cam-nang/${art.slug}`}
-              className="group bg-white border border-blue-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition flex flex-col"
-            >
-              <div className="h-44 bg-blue-50 relative overflow-hidden">
-                <img
-                  src={art.coverImage || 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=800'}
-                  alt={art.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/90 text-[#0B74E5] border border-blue-100 shadow-xs backdrop-blur">
-                  {art.category || 'Kỹ thuật nuôi & Làm nước'}
-                </div>
-              </div>
+      {/* Articles List / Grid (Text-First Design - No Images) */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-48 bg-white border border-slate-200/80 rounded-2xl animate-pulse p-6 space-y-3">
+              <div className="h-4 bg-slate-200 rounded w-1/3" />
+              <div className="h-6 bg-slate-200 rounded w-3/4" />
+              <div className="h-4 bg-slate-100 rounded w-full" />
+              <div className="h-4 bg-slate-100 rounded w-2/3" />
+            </div>
+          ))}
+        </div>
+      ) : articles.length === 0 ? (
+        <div className="bg-white border border-blue-100 rounded-3xl p-12 text-center text-slate-400 space-y-3 shadow-xs">
+          <BookOpen className="w-12 h-12 text-[#1A94FF] mx-auto" />
+          <h3 className="font-extrabold text-slate-800 text-base">Không tìm thấy bài viết cẩm nang phù hợp</h3>
+          <p className="text-xs text-slate-400">Rất tiếc, chưa có nội dung nào phù hợp với bộ lọc hoặc từ khóa tìm kiếm của bạn.</p>
+          <button
+            onClick={() => updateUrlParams({ search: null, category: null, page: 1 })}
+            className="inline-flex items-center gap-2 text-xs font-bold text-[#1A94FF] bg-blue-50 border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-100 transition cursor-pointer"
+          >
+            <span>Đặt lại tất cả bộ lọc</span>
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Featured Spotlight Card (First article on page 1 with no search/filter) */}
+          {page === 1 && !search && !selectedCategory && articles.length > 0 && (() => {
+            const feat = articles[0];
+            const readTime = Math.max(1, Math.ceil((feat.excerpt?.length || feat.content?.length || 200) / 120));
+            return (
+              <div className="relative bg-gradient-to-br from-white via-blue-50/40 to-slate-50 border border-blue-200/90 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md transition group overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="relative z-10 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#1A94FF] text-white shadow-xs">
+                        ⭐ Cẩm nang nổi bật
+                      </span>
+                      <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-[#0B74E5] border border-blue-200">
+                        {feat.category || 'Kỹ thuật nuôi & Làm nước'}
+                      </span>
+                    </div>
 
-              <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-[#1A94FF]" />
-                      {new Date(art.publishedAt || Date.now()).toLocaleDateString('vi-VN')}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3.5 h-3.5 text-slate-400" />
-                      {art.viewsCount || 0} lượt xem
-                    </span>
+                    <div className="flex items-center gap-3 text-xs text-slate-400 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-[#1A94FF]" />
+                        {new Date(feat.publishedAt || Date.now()).toLocaleDateString('vi-VN')}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5 text-slate-400" />
+                        {feat.viewsCount || 0} lượt xem
+                      </span>
+                    </div>
                   </div>
 
-                  <h3 className="font-bold text-slate-900 text-base sm:text-lg group-hover:text-[#1A94FF] transition line-clamp-2">
-                    {art.title}
-                  </h3>
+                  <Link href={`/cam-nang/${feat.slug}`} className="block space-y-2 group">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 group-hover:text-[#1A94FF] transition-colors leading-snug">
+                      {feat.title}
+                    </h2>
+                    {feat.excerpt && (
+                      <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed font-normal">
+                        {feat.excerpt}
+                      </p>
+                    )}
+                  </Link>
 
-                  {art.excerpt && (
-                    <p className="text-slate-600 text-xs line-clamp-2 leading-relaxed">
-                      {art.excerpt}
-                    </p>
-                  )}
-                </div>
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-200/60 text-xs">
+                    <div className="flex items-center gap-2 text-slate-500 font-medium">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-[10px]">
+                        {(feat.author?.displayName || feat.author?.username || 'A')[0].toUpperCase()}
+                      </div>
+                      <span className="font-bold text-slate-800">
+                        {feat.author?.displayName || feat.author?.username || 'AquaHub Editorial'}
+                      </span>
+                      <span>•</span>
+                      <span className="text-slate-500 font-medium">⏱️ {readTime} phút đọc</span>
+                    </div>
 
-                <div className="flex items-center justify-between text-xs font-semibold text-[#1A94FF] pt-3 border-t border-blue-50">
-                  <span>Đọc tiếp cẩm nang</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <Link
+                      href={`/cam-nang/${feat.slug}`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A94FF] hover:bg-[#0B74E5] text-white font-bold text-xs shadow-xs transition group-hover:translate-x-1"
+                    >
+                      <span>Khám phá chi tiết cẩm nang</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </Link>
-          ))
-        )}
-      </div>
+            );
+          })()}
 
-      {/* Pagination Bar */}
-      {totalItems > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-            <div>
-              Hiển thị <strong className="text-slate-800">{(page - 1) * pageSize + 1}</strong> - <strong className="text-slate-800">{Math.min(page * pageSize, totalItems)}</strong> trên tổng số <strong className="text-[#0B74E5]">{totalItems}</strong> cẩm nang
-            </div>
-            <span className="text-slate-300 hidden sm:inline">•</span>
-            <div className="flex items-center gap-2">
-              <span>Hiển thị mỗi trang:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0B74E5] focus:outline-none focus:border-[#1A94FF] cursor-pointer"
-              >
-                <option value={12}>12 bài</option>
-                <option value={24}>24 bài</option>
-                <option value={50}>50 bài (Tất cả)</option>
-              </select>
-            </div>
+          {/* Regular Articles Grid (Text-Only Editorial Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(page === 1 && !search && !selectedCategory ? articles.slice(1) : articles).map((art) => {
+              const readTime = Math.max(1, Math.ceil((art.excerpt?.length || art.content?.length || 150) / 100));
+              return (
+                <Link
+                  key={art.id}
+                  href={`/cam-nang/${art.slug}`}
+                  className="group bg-white border border-slate-200/90 hover:border-[#1A94FF] rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between space-y-4 relative overflow-hidden"
+                >
+                  <div className="space-y-3">
+                    {/* Header Info: Category Badge & Reading Time */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-[#0B74E5] border border-blue-100 truncate max-w-[180px]">
+                        {art.category || 'Cẩm nang chung'}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-400 shrink-0">
+                        ⏱️ {readTime} phút đọc
+                      </span>
+                    </div>
+
+                    {/* Article Title */}
+                    <h3 className="font-bold text-slate-900 text-base sm:text-lg group-hover:text-[#1A94FF] transition-colors line-clamp-2 leading-snug">
+                      {art.title}
+                    </h3>
+
+                    {/* Article Excerpt */}
+                    {art.excerpt && (
+                      <p className="text-slate-600 text-xs sm:text-sm line-clamp-3 leading-relaxed font-normal">
+                        {art.excerpt}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Card Bottom Footer: Meta & Action Link */}
+                  <div className="pt-3 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-[#1A94FF]" />
+                        {new Date(art.publishedAt || Date.now()).toLocaleDateString('vi-VN')}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5 text-slate-400" />
+                        {art.viewsCount || 0} lượt xem
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs font-bold text-[#1A94FF] group-hover:text-[#0B74E5] pt-1">
+                      <span>Đọc cẩm nang</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                className="p-2 border border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4 text-slate-600" />
-              </button>
-
-              <div className="flex items-center gap-1">
-                {renderPaginationButtons()}
-              </div>
-
-              <button
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-                className="p-2 border border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              </button>
-            </div>
-          )}
         </div>
       )}
 
+      {/* Pagination Bar */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        itemLabel="cẩm nang"
+        onPageChange={(newPage) => updateUrlParams({ page: newPage })}
+        onPageSizeChange={(newPageSize) => updateUrlParams({ pageSize: newPageSize, page: 1 })}
+      />
+
     </div>
+  );
+}
+
+export default function ArticlesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-16 text-center text-slate-400">
+        <div className="w-10 h-10 border-4 border-[#1A94FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="font-semibold text-slate-600 text-sm">Đang tải danh sách cẩm nang...</p>
+      </div>
+    }>
+      <ArticlesPageContent />
+    </Suspense>
   );
 }

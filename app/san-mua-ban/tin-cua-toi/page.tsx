@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Listing, ListingStatus } from '@/types';
 import ListingCard from '@/components/ui/listing-card';
+import DetailPageHeader from '@/components/ui/detail-page-header';
 import { useToast } from '@/components/ui/toast-provider';
 import { ShoppingBag, PlusCircle, ArrowLeft, Layers } from 'lucide-react';
 
@@ -46,12 +47,11 @@ export default function MyListingsPage() {
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6">
       <div className="container mx-auto space-y-6">
-        <Link
-          href="/cho-thuy-sinh"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[#1A94FF] transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Quay lại Chợ Thủy Sinh
-        </Link>
+        <DetailPageHeader
+          breadcrumbs={[{ label: 'Sàn Mua Bán', href: '/san-mua-ban' }]}
+          currentTitle="Tin rao bán của tôi"
+          showShare={false}
+        />
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -64,7 +64,7 @@ export default function MyListingsPage() {
           </div>
 
           <Link
-            href="/cho-thuy-sinh/dang-ban"
+            href="/san-mua-ban/dang-ban"
             className="px-5 py-2.5 bg-[#1A94FF] hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0"
           >
             <PlusCircle className="w-4 h-4" /> Đăng tin mới
@@ -72,7 +72,7 @@ export default function MyListingsPage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-72 bg-slate-200 rounded-2xl animate-pulse" />
             ))}
@@ -87,14 +87,14 @@ export default function MyListingsPage() {
               Hãy tạo tin rao bán đầu tiên để kết nối với người mua trên AquaHub!
             </p>
             <Link
-              href="/cho-thuy-sinh/dang-ban"
+              href="/san-mua-ban/dang-ban"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1A94FF] text-white text-xs font-semibold rounded-xl"
             >
               <PlusCircle className="w-4 h-4" /> Đăng tin bán ngay
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {listings.map((item) => (
               <ListingCard
                 key={item.id}

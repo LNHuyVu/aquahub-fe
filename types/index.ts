@@ -87,10 +87,23 @@ export interface Tank {
   createdAt: string;
 }
 
+export interface PostCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  order?: number;
+  createdAt?: string;
+}
+
 export interface Post {
   id: string;
+  slug?: string;
+  title?: string;
   content: string;
-  category?: string;
+  categoryId?: string;
+  category?: PostCategory | any;
   images?: string[];
   authorId: string;
   author?: User;
@@ -98,6 +111,7 @@ export interface Post {
   commentsCount: number;
   isLiked?: boolean;
   isBookmarked?: boolean;
+  isPublished?: boolean;
   createdAt: string;
 }
 
@@ -178,6 +192,21 @@ export interface ListingComment {
   createdAt: string;
 }
 
+export interface ListingImageData {
+  url: string;
+  thumbnailUrl?: string;
+  width?: number;
+  height?: number;
+  caption?: string;
+}
+
+export interface ListingVideoData {
+  url: string;
+  thumbnailUrl?: string;
+  title?: string;
+  duration?: number;
+}
+
 export interface Listing {
   id: string;
   title: string;
@@ -188,7 +217,9 @@ export interface Listing {
   condition: ListingCondition;
   status: ListingStatus;
   images?: string[];
+  imageData?: ListingImageData[];
   videoUrl?: string;
+  videosData?: ListingVideoData[];
   contactName: string;
   contactPhone: string;
   contactZalo?: string;
@@ -212,3 +243,31 @@ export interface Listing {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Conversation {
+  id: string;
+  listingId: string;
+  listing?: Listing;
+  buyerId: string;
+  buyer?: User;
+  sellerId: string;
+  seller?: User;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unreadBuyerCount: number;
+  unreadSellerCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  sender?: User;
+  content: string;
+  type: 'TEXT' | 'IMAGE';
+  readAt?: string;
+  createdAt: string;
+}
+

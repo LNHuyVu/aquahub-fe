@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Bí quyết nuôi cá Guppy 7 màu vây xòe rực rỡ và đẻ sai",
+    "slug": "bi-quyet-nuoi-ca-guppy-7-mau-vay-xoe-ruc-ro",
+    "category": "Kỹ thuật nuôi & Làm nước",
+    "excerpt": "Hướng dẫn chọn cá giống, chuẩn bị bể nuôi 20L có vi sinh ổn định và chế độ ăn trùn chỉ, artemia giúp cá 7 màu giữ dáng đẹp.",
+    "coverImage": "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=800",
+    "tags": ["Cá Guppy", "Kỹ thuật nuôi", "AquaHub Guide"],
+    "content": "<h2>1. Chuẩn bị bể nuôi cá Guppy</h2><p>Nên chọn bể tối thiểu 20L nước có hệ vi sinh ổn định. Nhiệt độ thích hợp từ 24-28°C và độ pH từ 6.8 - 7.5.</p><h2>2. Chế độ dinh dưỡng</h2><p>Cho ăn kết hợp giữa cám Thái Inve N5/N8 và artemia ấp tươi 2 lần mỗi ngày.</p>"
+  },
+  {
+    "title": "Kỹ thuật Cycle bể cá mới tạo hệ vi sinh chuẩn sau 7 ngày",
+    "slug": "ky-thuat-cycle-be-ca-moi-tao-he-vi-sinh-chuan",
+    "category": "Kỹ thuật nuôi & Làm nước",
+    "excerpt": "Quy trình thiết lập chu trình Nitơ xử lý khí độc NH3/NO2 an toàn cho cá cảnh bằng men vi sinh tươi.",
+    "coverImage": "https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=800",
+    "tags": ["Cycle bể", "Vi sinh", "Xử lý nước"],
+    "content": "<h2>1. Nguyên lý chu trình Nitơ</h2><p>Phân cá và thức ăn thừa tạo ra NH3 độc hại. Vi sinh Nitrosomonas và Nitrobacter sẽ chuyển hóa NH3 thành NO2 và NO3 không độc.</p><h2>2. Các bước châm vi sinh</h2><p>Châm men vi sinh ExtraBio kết hợp chạy lọc và sủi oxy 24/7 trong 5-7 ngày trước khi thả cá.</p>"
+  },
+  {
+    "title": "Hướng dẫn điều trị bệnh nấm trắng và thối vây ở cá cảnh",
+    "slug": "huong-dan-dieu-tri-benh-nam-trang-va-thoi-vay",
+    "category": "Bệnh cá & Điều trị",
+    "excerpt": "Các bước cách ly cá bệnh, tăng sưởi 30°C và sử dụng muối hột liều lượng chuẩn trị dứt điểm nấm cá.",
+    "coverImage": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800",
+    "tags": ["Bệnh cá", "Nấm cá", "Điều trị"],
+    "content": "<h2>1. Dấu hiệu cá bị nấm</h2><p>Thân thể cá xuất hiện các sợi bông trắng mỏng, vây bị rách cộm hoặc túm lại lờ đờ.</p><h2>2. Cách chữa trị</h2><p>Bật sưởi 30°C, châm muối hột 2g/lít và đánh Bio-Knock 2 theo đúng chỉ định.</p>"
+  }
+]

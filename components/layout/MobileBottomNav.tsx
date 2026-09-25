@@ -12,8 +12,8 @@ export default function MobileBottomNav() {
 
   const navItems = [
     { label: 'Trang chủ', href: '/', icon: Home },
-    { label: 'Cá cảnh', href: '/ca-canh', icon: Fish },
-    { label: 'Chợ thủy sinh', href: '/cho-thuy-sinh', icon: ShoppingBag },
+    { label: 'Tra cứu', href: '/ca-canh', icon: Fish },
+    { label: 'Sàn mua bán', href: '/san-mua-ban', icon: ShoppingBag },
     { label: 'Hỏi đáp', href: '/hoi-dap', icon: HelpCircle },
     { label: user ? 'Tài khoản' : 'Đăng nhập', href: user ? (user.role === 'ADMIN' ? '/admin' : '/cong-dong') : '/login', icon: User },
   ];

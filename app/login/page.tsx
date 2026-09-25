@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [form, setForm] = useState({ usernameOrEmail: '', password: '' });
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res: any = await api.post('/auth/login', form);
+      const res: any = await api.post('/auth/login', { ...form, rememberMe });
       const { accessToken, refreshToken, user } = res.data;
       login(accessToken, refreshToken, user);
       router.push('/');
@@ -109,6 +110,18 @@ export default function LoginPage() {
               />
               <Lock className="w-4 h-4 text-sky-500 absolute right-3.5 top-3.5" />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-600 font-medium hover:text-slate-900 transition">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer accent-sky-600"
+              />
+              <span>Ghi nhớ đăng nhập (1 năm)</span>
+            </label>
           </div>
 
           <button

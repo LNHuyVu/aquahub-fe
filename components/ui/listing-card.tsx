@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Listing, ListingStatus, PriceType } from '@/types';
-import { MapPin, Eye, Heart, MessageSquare, Truck, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { MapPin, Eye, Heart, MessageSquare, Truck, ShieldCheck, CheckCircle2, Pencil } from 'lucide-react';
 
 interface ListingCardProps {
   listing: Listing;
@@ -32,16 +32,24 @@ export function getConditionBadge(condition: string) {
 
 export default function ListingCard({ listing, onToggleStatus, isOwner }: ListingCardProps) {
   const isSold = listing.status === ListingStatus.SOLD;
-  const cover = listing.images && listing.images.length > 0 ? listing.images[0] : '/placeholder-fish.jpg';
+  
+  // Extract all images
+  const allImages = listing.imageData && listing.imageData.length > 0
+    ? listing.imageData.map((i) => i.thumbnailUrl || i.url)
+    : listing.images && listing.images.length > 0
+    ? listing.images
+    : ['https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=800'];
+
+  const hasVideo = !!listing.videoUrl || (listing.videosData && listing.videosData.length > 0);
   const conditionBadge = getConditionBadge(listing.condition);
 
   return (
     <div className="group relative bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
       {/* Image Thumbnail Container */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-        <Link href={`/cho-thuy-sinh/${listing.slug}`} className="block w-full h-full">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 group/img">
+        <Link href={`/san-mua-ban/${listing.slug}`} className="block w-full h-full">
           <img
-            src={cover}
+            src={allImages[0]}
             alt={listing.title}
             className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
               isSold ? 'grayscale opacity-70' : ''
@@ -52,10 +60,10 @@ export default function ListingCard({ listing, onToggleStatus, isOwner }: Listin
           />
         </Link>
 
-        {/* STATUS BADGES */}
+        {/* STATUS & MEDIA BADGES */}
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
           {isSold ? (
-            <span className="px-2.5 py-1 text-xs font-bold bg-red-600 text-white rounded-full shadow-md flex items-center gap-1 animate-pulse">
+            <span className="px-2.5 py-1 text-xs font-bold bg-red-600 text-white rounded-full shadow-md flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
               ĐÃ BÁN
             </span>
@@ -66,12 +74,28 @@ export default function ListingCard({ listing, onToggleStatus, isOwner }: Listin
             </span>
           )}
 
+          {hasVideo && (
+            <span className="px-2 py-1 text-xs font-bold bg-emerald-600 text-white rounded-full shadow-md flex items-center gap-1 animate-pulse">
+              🎥 Có Video HD
+            </span>
+          )}
+
           {listing.isPinned && (
             <span className="px-2 py-1 text-xs font-bold bg-amber-500 text-white rounded-full shadow">
               📌 Nổi bật
             </span>
           )}
         </div>
+
+        {/* Image Count Indicator Badge */}
+        {allImages.length > 1 && (
+          <div className="absolute top-2.5 right-2.5 z-10">
+            <span className="px-2 py-0.5 text-[11px] font-bold bg-slate-900/70 text-white backdrop-blur-md rounded-full">
+              📷 {allImages.length}
+            </span>
+          </div>
+        )}
+
 
         {/* Category Pill */}
         {listing.category && (
@@ -95,7 +119,7 @@ export default function ListingCard({ listing, onToggleStatus, isOwner }: Listin
       {/* Content Container */}
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div>
-          <Link href={`/cho-thuy-sinh/${listing.slug}`}>
+          <Link href={`/san-mua-ban/${listing.slug}`}>
             <h3 className="font-semibold text-slate-900 line-clamp-2 hover:text-[#1A94FF] transition-colors leading-snug">
               {listing.title}
             </h3>
@@ -138,18 +162,30 @@ export default function ListingCard({ listing, onToggleStatus, isOwner }: Listin
             </span>
           </div>
 
-          {/* Owner Toggle Button */}
-          {isOwner && onToggleStatus && (
-            <button
-              onClick={() => onToggleStatus(listing.id)}
-              className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all ${
-                isSold
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-slate-200 text-slate-700 hover:bg-red-500 hover:text-white'
-              }`}
-            >
-              {isSold ? 'Đánh dấu Đang bán' : 'Đánh dấu Đã bán'}
-            </button>
+          {/* Owner Buttons */}
+          {isOwner && (
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/san-mua-ban/dang-ban?edit=${listing.id}`}
+                className="px-2.5 py-1 text-[11px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-all flex items-center gap-1 border border-blue-200"
+                title="Sửa tin đăng"
+              >
+                <Pencil className="w-3 h-3" /> Sửa
+              </Link>
+
+              {onToggleStatus && (
+                <button
+                  onClick={() => onToggleStatus(listing.id)}
+                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all ${
+                    isSold
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      : 'bg-slate-200 text-slate-700 hover:bg-red-500 hover:text-white'
+                  }`}
+                >
+                  {isSold ? 'Đánh dấu Đang bán' : 'Đánh dấu Đã bán'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

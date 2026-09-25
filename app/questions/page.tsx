@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toast-provider';
 import { api } from '@/lib/api';
 import { Question } from '@/types';
 import RichTextEditor from '@/components/ui/rich-text-editor';
 import { Dialog } from '@/components/ui/dialog';
+import Pagination from '@/components/ui/pagination';
+import DetailPageHeader from '@/components/ui/detail-page-header';
 import {
   HelpCircle,
   MessageSquare,
@@ -15,8 +17,6 @@ import {
   Eye,
   Plus,
   Search,
-  ChevronLeft,
-  ChevronRight,
   X,
   Paperclip,
   Image as ImageIcon,
@@ -26,22 +26,26 @@ import {
   FileText
 } from 'lucide-react';
 
-export default function QuestionsPage() {
+function QuestionsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+
+  // Read search & page states from URL search params to preserve on BACK button
+  const search = searchParams.get('search') || '';
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = parseInt(searchParams.get('pageSize') || '24', 10);
+
+  const [searchInput, setSearchInput] = useState(search);
   const [showAskModal, setShowAskModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Pagination states
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -53,6 +57,22 @@ export default function QuestionsPage() {
   const currentTotalSize = attachments.reduce((acc, item) => acc + item.size, 0);
   const usedMB = (currentTotalSize / (1024 * 1024)).toFixed(2);
   const usedPercent = Math.min(100, Math.round((currentTotalSize / MAX_TOTAL_SIZE) * 100));
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  const updateUrlParams = (newParams: Record<string, string | number | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([key, val]) => {
+      if (val === null || val === '' || val === undefined) {
+        params.delete(key);
+      } else {
+        params.set(key, String(val));
+      }
+    });
+    router.push(`/hoi-dap?${params.toString()}`);
+  };
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -98,15 +118,15 @@ export default function QuestionsPage() {
 
         if (pendingSize + file.size > MAX_TOTAL_SIZE) {
           const remainingMB = ((MAX_TOTAL_SIZE - pendingSize) / (1024 * 1024)).toFixed(1);
-          toast.error(`Tổng dung lượng file đính kèm vượt quá giới hạn 10MB! (Còn lại: ${remainingMB}MB)`);
-          break;
+          toast.error(`Tệp "${file.name}" vượt quá dung lượng còn lại (${remainingMB}MB). Vui lòng chọn tệp nhỏ hơn!`);
+          continue;
         }
 
         const isVideo = file.type.startsWith('video/');
         const isImage = file.type.startsWith('image/');
 
-        if (!isImage && !isVideo) {
-          toast.error(`File "${file.name}" không hợp lệ. Chỉ chấp nhận định dạng ảnh hoặc video!`);
+        if (!isVideo && !isImage) {
+          toast.error(`Định dạng tệp "${file.name}" không được hỗ trợ!`);
           continue;
         }
 
@@ -179,207 +199,177 @@ export default function QuestionsPage() {
     }
   };
 
-  const renderPaginationButtons = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      if (
-        i === 1 ||
-        i === totalPages ||
-        (i >= page - 1 && i <= page + 1)
-      ) {
-        pages.push(
-          <button
-            key={i}
-            onClick={() => setPage(i)}
-            className={`w-8 h-8 rounded-xl text-xs font-bold transition cursor-pointer ${
-              page === i
-                ? 'bg-[#1A94FF] text-white shadow-md shadow-blue-500/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            {i}
-          </button>
-        );
-      } else if (i === page - 2 || i === page + 2) {
-        pages.push(
-          <span key={i} className="px-1 text-slate-400 text-xs">
-            ...
-          </span>
-        );
-      }
+  const handleDeleteQuestionCard = async (e: React.MouseEvent, questionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa câu hỏi này không?')) return;
+
+    try {
+      await api.delete(`/questions/${questionId}`);
+      toast.success('Đã xóa câu hỏi thành công!');
+      fetchQuestions();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Không thể xóa câu hỏi này');
     }
-    return pages;
   };
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 space-y-4 sm:space-y-6">
-      
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#1A94FF] via-[#0B74E5] to-[#0D5CB6] rounded-3xl p-8 sm:p-10 text-white shadow-lg shadow-blue-500/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 text-white text-xs font-bold backdrop-blur border border-white/30">
-            <HelpCircle className="w-4 h-4 text-amber-300" />
-            <span>Hỏi đáp & Tư vấn cá cảnh</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Góc Giải Đáp Thủy Sinh</h1>
-          <p className="text-blue-100 text-sm sm:text-base max-w-xl">
-            Bạn có thắc mắc về bệnh cá, thông số pH, xử lý nước hay cách chọn thức ăn? Hãy đặt câu hỏi ngay!
-          </p>
-        </div>
+    <div className="container mx-auto px-3 sm:px-4 py-4 space-y-4">
+      {/* Breadcrumb Header */}
+      <DetailPageHeader
+        breadcrumbs={[]}
+        currentTitle="Hỏi Đáp Thủy Sinh"
+        showShare={false}
+        showBack={false}
+      />
 
-        <button
-          onClick={() => {
-            if (!user) {
-              toast.error('Vui lòng đăng nhập để đặt câu hỏi!');
-              router.push('/login');
-              return;
-            }
-            setShowAskModal(true);
-          }}
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white text-[#0B74E5] font-bold text-sm shadow-md hover:bg-blue-50 transition flex-shrink-0 relative z-10 cursor-pointer"
-        >
-          <Plus className="w-4 h-4 text-[#1A94FF]" />
-          <span>Đặt câu hỏi mới</span>
-        </button>
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-[#1A94FF] via-[#0B74E5] to-[#0D5CB6] rounded-3xl p-8 sm:p-10 text-white shadow-lg shadow-blue-500/10 space-y-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 text-white text-xs font-bold backdrop-blur border border-white/30">
+              <HelpCircle className="w-4 h-4 text-amber-300" />
+              <span>Hỏi Đáp Thủy Sinh</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Cộng Đồng Giải Đáp & Tư Vấn</h1>
+            <p className="text-blue-100 text-sm sm:text-base max-w-2xl">
+              Nơi trao đổi kinh nghiệm, giải đáp thắc mắc về bệnh cá, cách chăm sóc và xử lý sự cố hồ cá nhanh nhất.
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              if (!user) {
+                toast.warning('Vui lòng đăng nhập để đặt câu hỏi!');
+                router.push('/login');
+                return;
+              }
+              setShowAskModal(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-[#0B74E5] font-extrabold text-sm rounded-2xl shadow-lg hover:bg-blue-50 hover:shadow-xl transition cursor-pointer shrink-0"
+          >
+            <Plus className="w-5 h-5 text-[#1A94FF]" />
+            <span>Đặt câu hỏi mới</span>
+          </button>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Tìm kiếm câu hỏi (ví dụ: Nấm cá Betta, Hồ 60L nuôi bao nhiêu cá...)"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
+      {/* Search Toolbar */}
+      <div className="bg-white border border-blue-100 rounded-2xl p-4 shadow-xs">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateUrlParams({ search: searchInput, page: 1 });
           }}
-          className="w-full bg-white border border-blue-100 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#1A94FF] focus:ring-2 focus:ring-blue-500/20 shadow-sm transition"
-        />
-        <Search className="w-5 h-5 text-[#1A94FF] absolute left-4 top-4" />
+          className="relative flex-1 w-full"
+        >
+          <input
+            type="text"
+            placeholder="Tìm kiếm câu hỏi (ví dụ: Nấm cá, Betta, lọc thùng, nước đục... Nhấn Enter)"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#1A94FF] transition"
+          />
+          <Search className="w-4 h-4 text-[#1A94FF] absolute left-3.5 top-3" />
+        </form>
       </div>
 
       {/* Questions List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {loading ? (
-          [1, 2, 3].map((i) => (
-            <div key={i} className="h-28 bg-white border border-blue-100 rounded-2xl animate-pulse" />
+          [1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-white border border-blue-100 rounded-2xl animate-pulse" />
           ))
         ) : questions.length === 0 ? (
-          <div className="bg-white border border-blue-100 rounded-2xl p-12 text-center text-slate-400 space-y-2">
-            <HelpCircle className="w-10 h-10 text-[#1A94FF] mx-auto" />
-            <p className="font-bold text-slate-700">Chưa có câu hỏi nào</p>
-            <p className="text-xs text-slate-400">Hãy là người đầu tiên đặt câu hỏi cho cộng đồng!</p>
+          <div className="bg-white border border-blue-100 rounded-2xl p-12 text-center text-slate-400 space-y-3">
+            <HelpCircle className="w-12 h-12 text-[#1A94FF] mx-auto opacity-80" />
+            <h3 className="font-bold text-slate-700 text-base">Chưa có câu hỏi nào phù hợp</h3>
+            <p className="text-xs text-slate-500">Hãy là người đầu tiên đặt câu hỏi cho cộng đồng!</p>
           </div>
         ) : (
-          questions.map((q) => (
-            <div key={q.id} className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm hover:border-blue-300 hover:shadow-md transition flex flex-col md:flex-row md:items-start justify-between gap-4">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
-                  {q.isSolved && (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Đã giải đáp
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-400">
-                    Bởi <strong className="text-slate-700">{q.author?.username || 'Thành viên'}</strong> • {new Date(q.createdAt).toLocaleDateString('vi-VN')}
-                  </span>
-                </div>
-                <h3 className="font-bold text-slate-900 text-lg hover:text-[#1A94FF] transition cursor-pointer" onClick={() => router.push(`/questions/${q.id}`)}>
-                  {q.title}
-                </h3>
-                <div 
-                  className="text-slate-600 text-sm line-clamp-2 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: q.content }}
-                />
+          questions.map((q) => {
+            const canDelete = user && (user.id === q.authorId || (user as any).role === 'ADMIN');
 
-                {/* Attached Media Previews on Post Item */}
-                {Array.isArray(q.images) && q.images.length > 0 && (
-                  <div className="flex items-center gap-2 pt-2 overflow-x-auto">
-                    {q.images.map((url, idx) => {
-                      const isVid = url.match(/\.(mp4|webm|ogg|mov)$/i);
-                      return (
-                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0 group">
-                          {isVid ? (
-                            <video src={url} className="w-full h-full object-cover" />
-                          ) : (
-                            <img src={url} alt={`attachment-${idx}`} className="w-full h-full object-cover" />
-                          )}
-                          {isVid && (
-                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                              <VideoIcon className="w-5 h-5 text-white" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+            return (
+              <div
+                key={q.id}
+                onClick={() => router.push(`/hoi-dap/${q.slug || q.id}`)}
+                className="group bg-white border border-blue-100 hover:border-blue-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition cursor-pointer space-y-3"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {q.isSolved ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Đã được giải đáp
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <HelpCircle className="w-3.5 h-3.5" /> Đang chờ phản hồi
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">• {new Date(q.createdAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
+
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#1A94FF] transition leading-snug">
+                      {q.title}
+                    </h3>
                   </div>
-                )}
-              </div>
 
-              <div className="flex items-center gap-4 text-xs text-slate-500 font-medium border-t md:border-t-0 pt-3 md:pt-0 border-blue-50 flex-shrink-0">
-                <div className="flex items-center gap-1 bg-[#E5F2FF] px-3 py-1.5 rounded-xl border border-blue-100 text-[#0B74E5] font-bold">
-                  <MessageSquare className="w-4 h-4 text-[#1A94FF]" />
-                  <span>{q.answersCount || 0} Trả lời</span>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteQuestionCard(e, q.id)}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer shrink-0 opacity-80 group-hover:opacity-100"
+                      title="Xóa câu hỏi này"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                  <Eye className="w-4 h-4 text-slate-400" />
-                  <span>{q.viewsCount || 0} Lượt xem</span>
+
+                {q.content && (
+                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                    {q.content.replace(/<[^>]*>?/gm, '')}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-[#0B74E5] font-bold flex items-center justify-center text-[10px]">
+                      {(q.author?.displayName || q.author?.username || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="font-semibold text-slate-700">{q.author?.displayName || q.author?.username || 'Thành viên'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-slate-400 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3.5 h-3.5" /> {q.viewsCount || 0}
+                    </span>
+                    <span className="flex items-center gap-1 text-[#0B74E5] font-bold">
+                      <MessageSquare className="w-3.5 h-3.5" /> {q.answersCount || 0} câu trả lời
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
-      {/* Pagination Bar */}
-      {totalItems > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-            <div>
-              Hiển thị <strong className="text-slate-800">{(page - 1) * pageSize + 1}</strong> - <strong className="text-slate-800">{Math.min(page * pageSize, totalItems)}</strong> trên tổng số <strong className="text-[#0B74E5]">{totalItems}</strong> câu hỏi
-            </div>
-            <span className="text-slate-300 hidden sm:inline">•</span>
-            <div className="flex items-center gap-2">
-              <span>Hiển thị mỗi trang:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0B74E5] focus:outline-none focus:border-[#1A94FF] cursor-pointer"
-              >
-                <option value={12}>12 câu hỏi</option>
-                <option value={24}>24 câu hỏi</option>
-                <option value={50}>50 câu hỏi (Tất cả)</option>
-              </select>
-            </div>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                className="p-2 border border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4 text-slate-600" />
-              </button>
-
-              <div className="flex items-center gap-1">
-                {renderPaginationButtons()}
-              </div>
-
-              <button
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-                className="p-2 border border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Standardized Responsive Pagination */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        itemLabel="câu hỏi"
+        onPageChange={(newPage) => updateUrlParams({ page: newPage })}
+        onPageSizeChange={(newPageSize) => updateUrlParams({ pageSize: newPageSize, page: 1 })}
+      />
 
       {/* Ask Question Modal */}
       <Dialog
@@ -530,3 +520,15 @@ export default function QuestionsPage() {
   );
 }
 
+export default function QuestionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-16 text-center text-slate-400">
+        <div className="w-10 h-10 border-4 border-[#1A94FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="font-semibold text-slate-600 text-sm">Đang tải danh sách câu hỏi...</p>
+      </div>
+    }>
+      <QuestionsPageContent />
+    </Suspense>
+  );
+}

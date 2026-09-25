@@ -6,7 +6,7 @@ import { Sparkles, Fish, Layers, Users, ArrowRight } from 'lucide-react';
 
 export default function AboutPage() {
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="container mx-auto px-3 sm:px-4 py-4 space-y-4">
       
       {/* Synchronized Header Banner */}
       <div className="bg-gradient-to-r from-[#1A94FF] via-[#0B74E5] to-[#0D5CB6] rounded-3xl p-8 sm:p-10 text-white shadow-lg shadow-blue-500/10 space-y-3 relative overflow-hidden">
